@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Optional
 from uuid import UUID
 
@@ -21,16 +22,25 @@ class ExpenseRepository(BaseRepository):
         )
         return result.scalar_one_or_none()
 
+    def _apply_filters(self, query, category=None, from_date=None, to_date=None):
+        if category:
+            query = query.where(Expense.category == category.strip().lower())
+        if from_date:
+            query = query.where(Expense.date >= from_date)
+        if to_date:
+            query = query.where(Expense.date <= to_date)
+        return query
+
     async def list_all(
         self,
         session: AsyncSession,
         category: Optional[str] = None,
         sort: str = "date_desc",
+        from_date: Optional[date] = None,
+        to_date: Optional[date] = None,
     ) -> list[Expense]:
         query = select(Expense)
-
-        if category:
-            query = query.where(Expense.category == category.strip().lower())
+        query = self._apply_filters(query, category, from_date, to_date)
 
         if sort == "date_asc":
             query = query.order_by(Expense.date.asc(), Expense.created_at.asc())
@@ -44,14 +54,22 @@ class ExpenseRepository(BaseRepository):
         self,
         session: AsyncSession,
         category: Optional[str] = None,
+        from_date: Optional[date] = None,
+        to_date: Optional[date] = None,
     ) -> int:
         query = select(func.coalesce(func.sum(Expense.amount_paisa), 0))
-
-        if category:
-            query = query.where(Expense.category == category.strip().lower())
+        query = self._apply_filters(query, category, from_date, to_date)
 
         result = await session.execute(query)
         return result.scalar_one()
+
+    async def delete(self, session: AsyncSession, expense_id: UUID) -> bool:
+        expense = await self.get_by_id(session, expense_id)
+        if not expense:
+            return False
+        await session.delete(expense)
+        await session.flush()
+        return True
 
     async def get_category_summary(
         self,
