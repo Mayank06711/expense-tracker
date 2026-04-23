@@ -31,7 +31,10 @@ class ExpenseCreate(BaseModel):
     @field_validator("category")
     @classmethod
     def normalize_category(cls, v: str) -> str:
-        return v.strip().lower()
+        v = v.strip().lower()
+        if not v:
+            raise ValueError("Category cannot be empty")
+        return v
 
     @field_validator("description")
     @classmethod
@@ -41,9 +44,12 @@ class ExpenseCreate(BaseModel):
     @field_validator("date")
     @classmethod
     def validate_date(cls, v: date) -> date:
-        today = datetime.now(timezone.utc).date()
-        if v > today + timedelta(days=1):
-            raise ValueError("Date cannot be in the future")
+        # Expense can never be in the future — you can't spend money tomorrow
+        # Use +1 day buffer only for timezone edge cases (user's "today" may be server's "tomorrow")
+        today_utc = datetime.now(timezone.utc).date()
+        max_date = today_utc + timedelta(days=1)  # timezone buffer only, not "future allowed"
+        if v > max_date:
+            raise ValueError("Expense date cannot be in the future")
         return v
 
 
@@ -67,6 +73,8 @@ class ExpenseListResponse(BaseModel):
 class ExpenseFilter(BaseModel):
     category: Optional[str] = None
     sort: Optional[str] = "date_desc"
+    from_date: Optional[date] = None
+    to_date: Optional[date] = None
 
     @field_validator("sort")
     @classmethod
