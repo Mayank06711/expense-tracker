@@ -1,15 +1,11 @@
 import { useState, useRef } from "react";
 import { createExpense } from "../api/expenses";
 import { generateId } from "../utils/idempotency";
-import type { Expense } from "../types/expense";
 
 interface Props {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  onOptimisticAdd: (expense: Expense) => void;
-  onOptimisticRemove: (id: string) => void;
-  onOptimisticConfirm: (id: string) => void;
   existingCategories: string[];
 }
 
@@ -23,7 +19,6 @@ const THROTTLE_MS = 200;
 
 export function ExpenseForm({
   open, onClose, onSuccess,
-  onOptimisticAdd, onOptimisticRemove, onOptimisticConfirm,
   existingCategories,
 }: Props) {
   const [amount, setAmount] = useState("");
@@ -60,17 +55,6 @@ export function ExpenseForm({
     const currentId = idempotencyId.current;
     const catNormalized = category.trim().toLowerCase();
 
-    const optimisticExpense: Expense = {
-      id: currentId,
-      amount: numAmount.toFixed(2),
-      category: catNormalized,
-      description: description.trim(),
-      date,
-      created_at: new Date().toISOString(),
-    };
-    onOptimisticAdd(optimisticExpense);
-    onClose();
-
     try {
       await createExpense({
         id: currentId,
@@ -79,11 +63,12 @@ export function ExpenseForm({
         description: description.trim(),
         date,
       });
-      onOptimisticConfirm(currentId);
+      // Only close modal and reset AFTER server confirms success
       resetForm();
       onSuccess();
+      onClose();
     } catch (err) {
-      onOptimisticRemove(currentId);
+      // Stay on the modal — show the error right here
       setError(err instanceof Error ? err.message : "Failed to create expense");
     } finally {
       setTimeout(() => setSubmitting(false), THROTTLE_MS);

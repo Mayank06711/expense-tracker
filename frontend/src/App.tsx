@@ -28,9 +28,6 @@ function App() {
     loading,
     error,
     refetch,
-    addOptimistic,
-    removeOptimistic,
-    confirmOptimistic,
     deleteExpense,
   } = useExpenses();
 
@@ -128,9 +125,6 @@ function App() {
         open={formOpen}
         onClose={() => setFormOpen(false)}
         onSuccess={refetch}
-        onOptimisticAdd={addOptimistic}
-        onOptimisticRemove={removeOptimistic}
-        onOptimisticConfirm={confirmOptimistic}
         existingCategories={categories}
       />
     </div>
