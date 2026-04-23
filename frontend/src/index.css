@@ -1,0 +1,49 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #ffffff;
+  --text: #111111;
+  --border: #d1d1d1;
+  --bg-btn: #111111;
+  --text-btn: #ffffff;
+  --bg-hover: #333333;
+  --bg-input: #ffffff;
+  --bg-muted: #f7f7f7;
+  --error: #dc2626;
+}
+
+.dark {
+  --bg: #090909;
+  --text: #e8e8e8;
+  --border: #2a2a2a;
+  --bg-btn: #e8e8e8;
+  --text-btn: #090909;
+  --bg-hover: #d4d4d4;
+  --bg-input: #111111;
+  --bg-muted: #141414;
+  --error: #ef4444;
+}
+
+body {
+  margin: 0;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+  transition: background-color 0.15s, color 0.15s;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Remove number input spinners */
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Fix date/calendar picker icon visibility in dark mode */
+.dark input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1);
+}
